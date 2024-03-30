@@ -32,14 +32,12 @@ app.post("/api/shorturl", (req, res) => {
             .replace(/\/.*$/, "") //after
             .toLowerCase()
     ).slice(1, -1);
-    console.log(url);
 
     dns.lookup(url, (err) => {
         if (err) {
-            console.log(err);
             return res.json({ error: "invalid url" });
         }
-        console.log("success");
+
         db.includes(url) ? db : db.push(url);
 
         return res.json({
