@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const dns = require("dns");
-const ShortUniqueId = require("short-unique-id");
 const cors = require("cors");
 const app = express();
 
@@ -24,35 +23,31 @@ app.get("/api/hello", function (req, res) {
     res.json({ greeting: "hello API" });
 });
 
-const db = {}; //temporary database
+const db = []; //temporary  for tests
 
 app.post("/api/shorturl", (req, res) => {
     const url = JSON.stringify(req.body.url.replace("https://", "")).slice(
         1,
         -1
     );
-    const uid = new ShortUniqueId().rnd();
 
     dns.lookup(url, (err) => {
         if (err) {
             return res.json({ error: "invalid url" });
         }
 
-        db[url] ? db[url] : (db[url] = uid);
+        db.includes(url) ? db : db.push(url);
 
         return res.json({
             original_url: "https://" + url,
-            short_url: db[url],
+            short_url: db.length,
         });
     });
 });
 
 app.get("/api/shorturl/:short", (req, res) => {
-    if (Object.values(db).includes(req.params.short)) {
-        res.redirect(
-            "https://" +
-                Object.keys(db).find((url) => db[url] === req.params.short)
-        );
+    if (db.includes(req.params.short)) {
+        res.redirect("https://" + db[req.params.short - 1]);
     } else {
         res.send({ error: "short url not found" });
     }
