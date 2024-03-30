@@ -40,7 +40,7 @@ app.post("/api/shorturl", (req, res) => {
 
         return res.json({
             original_url: "https://" + url,
-            short_url: db.length,
+            short_url: db.indexOf(url) + 1,
         });
     });
 });
