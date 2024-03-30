@@ -46,7 +46,7 @@ app.post("/api/shorturl", (req, res) => {
 });
 
 app.get("/api/shorturl/:short", (req, res) => {
-    if (db.length >= req.params.short) {
+    if (db.length >= req.params.short && req.params.short > 0) {
         res.redirect("https://" + db[req.params.short - 1]);
     } else {
         res.send({ error: "short url not found" });
