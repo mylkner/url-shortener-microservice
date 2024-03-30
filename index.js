@@ -26,16 +26,19 @@ app.get("/api/hello", function (req, res) {
 const db = []; //temporary  for tests
 
 app.post("/api/shorturl", (req, res) => {
-    const url = JSON.stringify(req.body.url.replace("https://", "")).slice(
-        1,
-        -1
-    );
+    const url = JSON.stringify(
+        req.body.url
+            .replace(/(https:\/\/)|(http:\/\/)/, "") //before host name
+            .replace(/\/.*$/, "") //after
+    ).slice(1, -1);
+    console.log(url);
 
     dns.lookup(url, (err) => {
         if (err) {
+            console.log(err);
             return res.json({ error: "invalid url" });
         }
-
+        console.log("success");
         db.includes(url) ? db : db.push(url);
 
         return res.json({
