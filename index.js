@@ -30,6 +30,7 @@ app.post("/api/shorturl", (req, res) => {
         req.body.url
             .replace(/(https:\/\/)|(http:\/\/)/, "") //before host name
             .replace(/\/.*$/, "") //after
+            .toLowerCase()
     ).slice(1, -1);
     console.log(url);
 
