@@ -66,7 +66,7 @@ app.get("/api/shorturl/:short", async (req, res) => {
     if (url) {
         res.redirect(url.url);
     } else {
-        res.json({ error: "invalid url" });
+        res.json({ error: "invalid short url" });
     }
 });
 
