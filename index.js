@@ -2,11 +2,30 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const dns = require("dns");
+const { URL } = require("url");
+const mongoose = require("mongoose");
+const Urls = require("./Schemas/Url.js");
 const cors = require("cors");
 const app = express();
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
+
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
+
+const createAndSaveUrl = async (url) => {
+    try {
+        const urlData = await Urls.create({
+            url: url,
+        });
+        return urlData;
+    } catch (err) {
+        console.log(err.message);
+    }
+};
 
 app.use(cors());
 
@@ -18,40 +37,36 @@ app.get("/", function (req, res) {
     res.sendFile(__dirname + "/views/index.html");
 });
 
-// Your first API endpoint
-app.get("/api/hello", function (req, res) {
-    res.json({ greeting: "hello API" });
-});
-
-const db = []; //temporary  for tests
-
 app.post("/api/shorturl", (req, res) => {
-    const url = JSON.stringify(
-        req.body.url
-            .replace(/(https:\/\/)|(http:\/\/)/, "") //before host name
-            .replace(/\/.*$/, "") //after
-            .toLowerCase()
-    ).slice(1, -1);
+    try {
+        const url = req.body.url;
 
-    dns.lookup(url, (err) => {
-        if (err) {
-            return res.json({ error: "invalid url" });
-        }
+        dns.lookup(new URL(url).hostname, async (err) => {
+            if (err) {
+                return res.json({ error: "invalid url" });
+            }
 
-        db.includes(url) ? db : db.push(url);
+            const urlData =
+                (await Urls.findOne({ url: url })) ||
+                (await createAndSaveUrl(url));
 
-        return res.json({
-            original_url: "https://" + url,
-            short_url: db.indexOf(url) + 1,
+            return res.json({
+                original_url: urlData.url,
+                short_url: urlData.urlShortened,
+            });
         });
-    });
+    } catch (err) {
+        res.json({ error: "invalid url" });
+    }
 });
 
-app.get("/api/shorturl/:short", (req, res) => {
-    if (db.length >= req.params.short && req.params.short > 0) {
-        res.redirect("https://" + db[req.params.short - 1]);
+app.get("/api/shorturl/:short", async (req, res) => {
+    const url = await Urls.findOne({ urlShortened: req.params.short });
+
+    if (url) {
+        res.redirect(url.url);
     } else {
-        res.send({ error: "short url not found" });
+        res.json({ error: "invalid url" });
     }
 });
 
